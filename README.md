@@ -11,4 +11,11 @@ cd dotfiles
 cp .tmux.conf ~/.tmux.conf
 cp .vimrc ~/.vimrc
 cp .bashrc ~/.bashrc
+
+# Fom vim
+# :PluginInstall
+
+# For tmux
+tmux source ~/.tmux.conf
+# prefix + I
 ```
