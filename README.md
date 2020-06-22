@@ -10,6 +10,7 @@ cd dotfiles
 # Take what you need
 cp .tmux.conf ~/.tmux.conf
 cp .vimrc ~/.vimrc
+# cp .bashrc ~/.bashrc
 
 # Fom vim
 # :PluginInstall
