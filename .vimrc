@@ -68,19 +68,21 @@ let g:slime_default_config = {"socket_name": "default", "target_pane": ":0.1"}
 let g:auto_save = 1 " Not sure I like this
 let g:auto_save_in_insert_mode = 0
 
-let g:pymode_python = 'python3'
+"let g:pymode_python = 'python3'
 let g:pymode_folding = 0
 "let g:pymode_lint = 0 " Switch to syntastic
 let g:pymode_lint_on_write = 0
 let g:pymode_rope_completion = 1
-"let g:pymode_rope_completion = 1
 let g:pymode_rope_complete_on_dot = 0
 let g:pymode_rope_completion_bind = '<C-N>'
 
 let g:indentLine_enabled = 0
 
 let g:vim_markdown_folding_disabled = 1
-let vim_markdown_preview_github=1
+"let vim_markdown_preview_github=0
+let vim_markdown_preview_pandoc=1
+let vim_markdown_preview_browser='Google Chrome'
+
 "let vim_markdown_preview_toggle=2
 
 " let vim_markdown_preview_pandoc=1
@@ -102,10 +104,11 @@ nnoremap <Leader>nt :NERDTreeTabsToggle<CR>
 nnoremap <Leader>pl :PymodeLint<CR>
 nnoremap <Leader>ut :UndotreeToggle<CR>
 nnoremap <Leader>tb :TagbarToggle<CR>
-nnoremap <Leader>gy :Goyo<CR>
+nnoremap <Leader>gy :set wrap <bar> :Goyo<CR>
 nnoremap <Leader>il :IndentLinesToggle<CR>
 nnoremap <Leader>tws :call TrimWhitespace()<CR>
 nnoremap <Leader>rt :retab<CR>
+nnoremap <Leader>sw :set wrap!<CR>
 nnoremap <Leader>nh :nohlsearch<CR>
 nnoremap <Leader>aa ggVG
 nnoremap <leader>np :e ~/buffer.md<cr>
