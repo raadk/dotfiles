@@ -21,6 +21,7 @@ Plugin 'JamshedVesuna/vim-markdown-preview'
 Plugin 'mbbill/undotree'
 Plugin 'majutsushi/tagbar'
 Plugin 'junegunn/goyo.vim'
+Plugin 'junegunn/limelight.vim'
 Plugin 'othree/html5.vim'
 Plugin 'pangloss/vim-javascript'
 Plugin 'mxw/vim-jsx'
@@ -30,6 +31,8 @@ Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'tpope/vim-surround'
 Plugin 'jpalardy/vim-slime'
+"Plugin 'dense-analysis/ale'
+
 
 "Plugin 'suan/vim-instant-markdown'
 "Plugin 'stephpy/vim-yaml'
@@ -92,6 +95,12 @@ let vim_markdown_preview_browser='Google Chrome'
 
 let g:airline#extensions#tagbar#enabled = 0
 
+" Limelight
+let g:limelight_conceal_ctermfg = 'gray'
+let g:limelight_conceal_ctermfg = 240
+
+
+
 " Quote word
 map <Leader>dq ysiw"
 map <Leader>sq ysiw'
@@ -104,20 +113,28 @@ nnoremap <Leader>nt :NERDTreeTabsToggle<CR>
 nnoremap <Leader>pl :PymodeLint<CR>
 nnoremap <Leader>ut :UndotreeToggle<CR>
 nnoremap <Leader>tb :TagbarToggle<CR>
-nnoremap <Leader>gy :set wrap <bar> :Goyo<CR>
+nnoremap <Leader>gy :Goyo<CR>
+nnoremap <Leader>gyl :set wrap <CR> :set linebreak <CR> :Limelight <CR> :setlocal spell <CR> :Goyo<CR> 
+nnoremap <Leader>gyq  :Goyo! <CR> :set nowrap <CR> :set nolinebreak <CR> :Limelight! <CR> :setlocal nospell <CR> 
+
+nnoremap <Leader>ll :Limelight!!<CR>
 nnoremap <Leader>il :IndentLinesToggle<CR>
 nnoremap <Leader>tws :call TrimWhitespace()<CR>
 nnoremap <Leader>rt :retab<CR>
-nnoremap <Leader>sw :set wrap!<CR>
+nnoremap <Leader>sw :set wrap! <CR> :set linebreak!<CR> 
 nnoremap <Leader>nh :nohlsearch<CR>
 nnoremap <Leader>aa ggVG
 nnoremap <leader>np :e ~/buffer.md<cr>
+nnoremap <leader>op :!open %<cr>
 
 map <Leader>sc :setlocal spell!<CR>
 map <leader>scn ]s
 map <leader>scp [s
 map <leader>sca zg
 map <leader>sc? z=
+
+nnoremap <Leader>dt :r !date<Esc>
+nnoremap <Leader>hr 10i-<Esc>
 
 vnoremap <Leader>c "+y
 nnoremap <Leader>c V"+y<Esc>
