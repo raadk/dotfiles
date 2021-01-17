@@ -9,6 +9,7 @@ export PROJECTS="#"
 export COURSES="$PROJECTS/courses"
 export DATA="#"
 export NOTES="#"
+export BOOKS="$NOTES/books"
 
 alias lsd="ls -alhF | grep /$"
 alias diskspace="du -Sh | sort -n -r |more"
@@ -24,8 +25,14 @@ cdls() { cd "$@" && ls; }
 project() { cd "$PROJECTS/$@"; }
 projects() { ls -lht "$PROJECTS/"; }
 
+scratch() { vim "$NOTES/scratch.md"; }
+todo() { vim "$NOTES/todo.md"; }
+
 note() { vim "$NOTES/$@.md"; }
 notes() { ls -lht "$NOTES"; }
+
+book() { vim "$BOOKS/$@.md"; }
+books() { ls -lht "$BOOKS"; }
 
 course() { cd "$COURSES/$@"; }
 courses() { ls -lht "$COURSES/"; }
