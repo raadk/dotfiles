@@ -31,6 +31,8 @@ Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'tpope/vim-surround'
 Plugin 'jpalardy/vim-slime'
+Plugin 'lervag/vimtex'
+
 "Plugin 'dense-analysis/ale'
 
 
@@ -78,6 +80,7 @@ let g:pymode_lint_on_write = 0
 let g:pymode_rope_completion = 1
 let g:pymode_rope_complete_on_dot = 0
 let g:pymode_rope_completion_bind = '<C-N>'
+let g:pymode_rope_rename_bind = '<Leader>rn'
 
 let g:indentLine_enabled = 0
 
@@ -85,6 +88,8 @@ let g:vim_markdown_folding_disabled = 1
 "let vim_markdown_preview_github=0
 let vim_markdown_preview_pandoc=1
 let vim_markdown_preview_browser='Google Chrome'
+let g:vim_markdown_math = 1
+
 
 "let vim_markdown_preview_toggle=2
 
@@ -92,6 +97,13 @@ let vim_markdown_preview_browser='Google Chrome'
 " let vim_markdown_preview_toggle=1
 " let vim_markdown_preview_temp_file=1
 " let vim_markdown_preview_use_xdg_open=1
+
+let g:tex_flavor='latex'
+"let g:vimtex_view_method='zathura'
+let g:vimtex_quickfix_mode=0
+set conceallevel=2
+let g:tex_conceal='abdmg'
+let g:vimtex_compiler_latexmk = {'build_dir' : 'latexbuild',}
 
 let g:airline#extensions#tagbar#enabled = 0
 
