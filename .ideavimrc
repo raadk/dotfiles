@@ -37,6 +37,8 @@ nnoremap <Leader>aa ggVG
 nnoremap <leader>np :e ~/buffer.md<cr>
 nnoremap <leader>op :!open %<cr>
 
+nnoremap <leader>ht Vggo
+
 map <Leader>sc :setlocal spell!<CR>
 map <leader>scn ]s
 map <leader>scp [s
