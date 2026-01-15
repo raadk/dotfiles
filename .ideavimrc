@@ -1,54 +1,6 @@
 set nocompatible
 filetype off
 
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-Plugin 'VundleVim/Vundle.vim'
-Plugin 'tpope/vim-fugitive'
-Plugin 'ctrlpvim/ctrlp.vim'
-Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
-Plugin 'dracula/vim'
-Plugin 'scrooloose/nerdtree'
-Plugin 'scrooloose/nerdcommenter'
-Plugin 'jistr/vim-nerdtree-tabs'
-Plugin 'nanotech/jellybeans.vim'
-Plugin 'klen/python-mode'
-Plugin 'vim-scripts/vim-auto-save'
-Plugin 'christoomey/vim-tmux-navigator'
-Plugin 'godlygeek/tabular'
-Plugin 'plasticboy/vim-markdown'
-Plugin 'JamshedVesuna/vim-markdown-preview'
-Plugin 'mbbill/undotree'
-Plugin 'majutsushi/tagbar'
-Plugin 'junegunn/goyo.vim'
-Plugin 'junegunn/limelight.vim'
-Plugin 'othree/html5.vim'
-Plugin 'pangloss/vim-javascript'
-Plugin 'mxw/vim-jsx'
-Plugin 'Yggdroot/indentLine'
-Plugin 'Valloric/MatchTagAlways'
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-Plugin 'tpope/vim-surround'
-Plugin 'jpalardy/vim-slime'
-Plugin 'lervag/vimtex'
-
-"Plugin 'dense-analysis/ale'
-
-
-"Plugin 'suan/vim-instant-markdown'
-"Plugin 'stephpy/vim-yaml'
-"Plugin 'vim-syntastic/syntastic'
-"Plugin 'altercation/vim-colors-solarized'
-"Plugin 'morhetz/gruvbox'
-"Plugin 'itchyny/lightline.vim'
-"Plugin 'honza/vim-snippets'
-"Plugin 'wesgibbs/vim-irblack'
-"Plugin 'plytophogy/vim-virtualenv'
-"Plugin 'jalvesaq/Nvim-R'
-call vundle#end()
-filetype plugin indent on
-
 " Change leader
 let mapleader=','
 
@@ -59,57 +11,7 @@ fun! TrimWhitespace()
     call winrestview(l:save)
 endfun
 
-" Filetype specific plugin settings
-au FileType python,html,css,less,js autocmd vimenter * NERDTree | wincmd p
-au FileType python,html,css,less,js let g:nerdtree_tabs_open_on_console_startup = 1
-au FileType html,css,less,js let g:indentLine_enabled = 1
-
-" Plugin settings
-let g:slime_target = "tmux"
-let g:slime_python_ipython = 1
-let g:slime_default_config = {"socket_name": "default", "target_pane": ":0.1"}
-
-
-let g:auto_save = 1 " Not sure I like this
-let g:auto_save_in_insert_mode = 0
-
-"let g:pymode_python = 'python3'
-let g:pymode_folding = 0
-"let g:pymode_lint = 0 " Switch to syntastic
-let g:pymode_lint_on_write = 0
-let g:pymode_rope_completion = 1
-let g:pymode_rope_complete_on_dot = 0
-let g:pymode_rope_completion_bind = '<C-N>'
-let g:pymode_rope_rename_bind = '<Leader>rn'
-
-let g:indentLine_enabled = 0
-
-let g:vim_markdown_folding_disabled = 1
-"let vim_markdown_preview_github=0
-let vim_markdown_preview_pandoc=1
-let vim_markdown_preview_browser='Google Chrome'
-let g:vim_markdown_math = 1
-
-
-"let vim_markdown_preview_toggle=2
-
-" let vim_markdown_preview_pandoc=1
-" let vim_markdown_preview_toggle=1
-" let vim_markdown_preview_temp_file=1
-" let vim_markdown_preview_use_xdg_open=1
-
-let g:tex_flavor='latex'
-"let g:vimtex_view_method='zathura'
-let g:vimtex_quickfix_mode=0
-set conceallevel=2
-let g:tex_conceal='abdmg'
-let g:vimtex_compiler_latexmk = {'build_dir' : 'latexbuild',}
-
-let g:airline#extensions#tagbar#enabled = 0
-
-" Limelight
-let g:limelight_conceal_ctermfg = 'gray'
-let g:limelight_conceal_ctermfg = 240
+set surround
 
 
 
@@ -118,22 +20,18 @@ map <Leader>dq ysiw"
 map <Leader>sq ysiw'
 
 " Quick access
-let vim_markdown_preview_hotkey='<Leader>md'
 set pastetoggle=<Leader>pp
 
-nnoremap <Leader>nt :NERDTreeTabsToggle<CR>
-nnoremap <Leader>pl :PymodeLint<CR>
-nnoremap <Leader>ut :UndotreeToggle<CR>
-nnoremap <Leader>tb :TagbarToggle<CR>
-nnoremap <Leader>gy :Goyo<CR>
-nnoremap <Leader>gyl :set wrap <CR> :set linebreak <CR> :Limelight <CR> :setlocal spell <CR> :Goyo<CR> 
-nnoremap <Leader>gyq  :Goyo! <CR> :set nowrap <CR> :set nolinebreak <CR> :Limelight! <CR> :setlocal nospell <CR> 
+map <Leader>rf :action ReformatCode<CR>
+map <leader>gy :action ToggleDistractionFreeMode<CR>
+map <leader>tb :action FileStructurePopup<CR>
+map <leader>nt :action ActivateProjectToolWindow<CR>
+map <leader>c<space> :action CommentByLineComment<CR>
+map <leader>cb<space> :action CommentByBlockComment<CR>
 
-nnoremap <Leader>ll :Limelight!!<CR>
-nnoremap <Leader>il :IndentLinesToggle<CR>
 nnoremap <Leader>tws :call TrimWhitespace()<CR>
 nnoremap <Leader>rt :retab<CR>
-nnoremap <Leader>sw :set wrap! <CR> :set linebreak!<CR> 
+nnoremap <Leader>sw :set wrap!<CR>
 nnoremap <Leader>nh :nohlsearch<CR>
 nnoremap <Leader>aa ggVG
 nnoremap <leader>np :e ~/buffer.md<cr>
@@ -160,16 +58,6 @@ command! W w
 command! Q q
 command! WQ wq
 command! Wq wq
-
-" Syntastic
-"set statusline+=%#warningmsg#
-"set statusline+=%{SyntasticStatuslineFlag()}
-"set statusline+=%*
-
-"let g:syntastic_always_populate_loc_list = 1
-"let g:syntastic_auto_loc_list = 1
-"let g:syntastic_check_on_open = 1
-"let g:syntastic_check_on_wq = 0
 
 " Disable error bells
 set noerrorbells
