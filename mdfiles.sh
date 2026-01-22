@@ -3,9 +3,12 @@
 # Usage:
 #   ./mdfiles.sh [--folders dir1 dir2 …] [--filetypes py js …] [--exclude dir1 dir2 …]
 #               [--sep "#"|"="|beginend|xml] [--sep-len N]
+#               [--output FILE | --exclude-stdout] [--zip FILE.zip]
 #               [--list | --counts]
 
 set -euo pipefail
+
+declare -a skip_paths=()
 
 # ---------------- argument parsing ----------------
 folders=()
@@ -15,30 +18,35 @@ list_only=false
 count_only=false
 
 # Separator style:
-#   "#"        -> Markdown-style header:      ## path/to/file.ext   (default)
+#   "#"        -> Markdown-style header:      ## path/to/file.ext
 #   "="        -> One-line banner:            ====== path/to/file.ext ======
 #   beginend   -> Explicit begin/end markers: ----- BEGIN FILE: ... / ----- END FILE: ...
 #   xml        -> XML-ish wrapper:            <file path="..."> ... </file>
 sep_style="beginend"
 sep_len=6   # only used for "=" banner repeat count
 
+# New output helpers
+output_file=""            # write concat output directly to this file (avoids redirect loops)
+zip_file=""               # create a zip archive of matched files (instead of concatenating)
+exclude_stdout=false       # when enabled, auto-exclude the file connected to stdout (if any)
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     --folders)
       shift
-      while [[ $# -gt 0 && $1 != --filetypes && $1 != --folders && $1 != --exclude && $1 != --sep && $1 != --sep-len && $1 != --list && $1 != --counts && $1 != --count && $1 != --help && $1 != -h ]]; do
+      while [[ $# -gt 0 && $1 != --filetypes && $1 != --folders && $1 != --exclude && $1 != --sep && $1 != --sep-len && $1 != --output && $1 != --zip && $1 != --exclude-stdout && $1 != --list && $1 != --counts && $1 != --count && $1 != --help && $1 != -h ]]; do
         folders+=("$1"); shift
       done
       ;;
     --filetypes)
       shift
-      while [[ $# -gt 0 && $1 != --folders && $1 != --filetypes && $1 != --exclude && $1 != --sep && $1 != --sep-len && $1 != --list && $1 != --counts && $1 != --count && $1 != --help && $1 != -h ]]; do
+      while [[ $# -gt 0 && $1 != --folders && $1 != --filetypes && $1 != --exclude && $1 != --sep && $1 != --sep-len && $1 != --output && $1 != --zip && $1 != --exclude-stdout && $1 != --list && $1 != --counts && $1 != --count && $1 != --help && $1 != -h ]]; do
         exts+=("${1#.}"); shift
       done
       ;;
     --exclude)
       shift
-      while [[ $# -gt 0 && $1 != --folders && $1 != --filetypes && $1 != --exclude && $1 != --sep && $1 != --sep-len && $1 != --list && $1 != --counts && $1 != --count && $1 != --help && $1 != -h ]]; do
+      while [[ $# -gt 0 && $1 != --folders && $1 != --filetypes && $1 != --exclude && $1 != --sep && $1 != --sep-len && $1 != --output && $1 != --zip && $1 != --exclude-stdout && $1 != --list && $1 != --counts && $1 != --count && $1 != --help && $1 != -h ]]; do
         excludes+=("$1"); shift
       done
       ;;
@@ -54,6 +62,21 @@ while [[ $# -gt 0 ]]; do
       sep_len="$1"
       shift
       ;;
+    --output|-o)
+      shift
+      [[ $# -gt 0 ]] || { echo "Missing argument to --output" >&2; exit 1; }
+      output_file="$1"
+      shift
+      ;;
+    --exclude-stdout)
+      exclude_stdout=true; shift
+      ;;
+    --zip)
+      shift
+      [[ $# -gt 0 ]] || { echo "Missing argument to --zip" >&2; exit 1; }
+      zip_file="$1"
+      shift
+      ;;
     --list)
       list_only=true; shift
       ;;
@@ -64,18 +87,36 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 Usage: ./mdfiles.sh [--folders dir1 dir2 …] [--filetypes py js …] [--exclude dir1 dir2 …]
                    [--sep "#"|"="|beginend|xml] [--sep-len N]
+                   [--output FILE | --exclude-stdout] [--zip FILE.zip]
                    [--list | --counts]
 
-Separators (only used in concat mode; ignored for --list/--counts):
-  --sep "#"         Markdown-style header:        ## path/to/file.ext        (default)
+Modes (pick at most one):
+  (default)         Concatenate matched files to stdout (or to --output FILE).
+  --list            List matched file paths.
+  --counts          Print per-file character counts + total.
+  --zip FILE.zip    Create a zip archive containing all matched files.
+
+Output-loop prevention:
+  --exclude-stdout   If stdout is redirected to a regular file, automatically exclude
+                     that file from the inputs (prevents infinite self-inclusion).
+  --output FILE      Write concatenated output directly to FILE and auto-exclude it.
+
+Separators (only used in concat mode; ignored for --list/--counts/--zip):
+  --sep "#"         Markdown-style header:        ## path/to/file.ext
   --sep "="         One-line banner:              ====== path/to/file.ext ======
                     (repeat count controlled by --sep-len, default 6)
   --sep beginend    Explicit begin/end markers:   ----- BEGIN FILE: path ----- / ----- END FILE: path -----
   --sep xml         XML-ish wrapper:              <file path="..."> ... </file>
 
 Examples:
-  ./mdfiles.sh --filetypes py js --exclude node_modules dist --sep "=" --sep-len 10
-  ./mdfiles.sh --folders src tests --sep beginend
+  # Prevent the classic infinite loop when redirecting to a file inside the scanned tree
+  ./mdfiles.sh --filetypes py md txt --exclude outputs .venv --exclude-stdout > Archive.md
+
+  # Preferred: have the script write the output itself (also prevents loops)
+  ./mdfiles.sh --filetypes py md txt --exclude outputs .venv --output Archive.md
+
+  # Zip up the same selection of files
+  ./mdfiles.sh --filetypes py md txt --exclude outputs .venv --zip Sources.zip
 EOF
       exit 0
       ;;
@@ -86,8 +127,19 @@ EOF
   esac
 done
 
-if $list_only && $count_only; then
-  echo "Only one of --list or --counts can be used at a time." >&2
+# ---------------- mode validation ----------------
+mode_count=0
+$list_only && mode_count=$((mode_count + 1))
+$count_only && mode_count=$((mode_count + 1))
+[[ -n "$zip_file" ]] && mode_count=$((mode_count + 1))
+
+if (( mode_count > 1 )); then
+  echo "Only one of --list, --counts, or --zip can be used at a time." >&2
+  exit 1
+fi
+
+if [[ -n "$output_file" && ( $list_only == true || $count_only == true || -n "$zip_file" ) ]]; then
+  echo "--output can only be used in concat mode (no --list/--counts/--zip)." >&2
   exit 1
 fi
 
@@ -183,6 +235,116 @@ emit_file() {
   fi
 }
 
+# ---------------- output-loop skip helpers ----------------
+skip_paths=()
+
+abspath() {
+  local p="$1"
+  if command -v realpath >/dev/null 2>&1; then
+    realpath "$p"
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$p"
+  else
+    # Best-effort fallback (does not resolve symlinks reliably)
+    local d b
+    d="$(dirname -- "$p")"
+    b="$(basename -- "$p")"
+    (cd "$d" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$b") || printf '%s\n' "$p"
+  fi
+}
+
+add_skip_path() {
+  local p="$1"
+  [[ -z "$p" ]] && return 0
+
+  # Original
+  skip_paths+=("$p")
+
+  # Normalized relative variants
+  if [[ "$p" != /* ]]; then
+    local no_dot="${p#./}"
+    skip_paths+=("$no_dot")
+    skip_paths+=("./$no_dot")
+  fi
+
+  # Absolute variant
+  local abs
+  abs="$(abspath "$p" 2>/dev/null || true)"
+  if [[ -n "$abs" ]]; then
+    skip_paths+=("$abs")
+
+    # If the absolute path is under CWD, add that relative form too.
+    local cwd
+    cwd="$(pwd -P)"
+    if [[ "$abs" == "$cwd/"* ]]; then
+      local rel="${abs#$cwd/}"
+      skip_paths+=("$rel")
+      skip_paths+=("./$rel")
+    fi
+  fi
+}
+
+should_skip() {
+  local f="$1"
+  local nf="${f#./}"
+  local s ns
+  for s in "${skip_paths[@]+"${skip_paths[@]}"}"; do
+    ns="${s#./}"
+    if [[ "$nf" == "$ns" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+detect_stdout_path() {
+  local target=""
+
+  # Linux (procfs)
+  if [[ -e "/proc/$$/fd/1" ]]; then
+    target="$(readlink "/proc/$$/fd/1" 2>/dev/null || true)"
+  fi
+
+  # Some systems expose fd targets via /dev/fd
+  if [[ -z "$target" && -e "/dev/fd/1" ]]; then
+    target="$(readlink "/dev/fd/1" 2>/dev/null || true)"
+  fi
+
+  # macOS fallback: lsof tends to be available and reliable for this.
+  if [[ -z "$target" ]] && command -v lsof >/dev/null 2>&1; then
+    target="$(lsof -a -p $$ -d 1 -Fn 2>/dev/null | sed -n 's/^n//p' | head -n 1)"
+  fi
+
+  # Only return regular files (pipes/sockets/ttys don't help)
+  if [[ -n "$target" && -f "$target" ]]; then
+    printf '%s\n' "$target"
+  fi
+}
+
+# Build skip set
+if [[ -n "$output_file" ]]; then
+  add_skip_path "$output_file"
+fi
+if [[ -n "$zip_file" ]]; then
+  add_skip_path "$zip_file"
+fi
+if $exclude_stdout; then
+  stdout_path="$(detect_stdout_path || true)"
+  if [[ -n "$stdout_path" ]]; then
+    add_skip_path "$stdout_path"
+  fi
+fi
+
+# If requested, write output directly to a file (concat mode only).
+if [[ -n "$output_file" ]]; then
+  out_dir="$(dirname -- "$output_file")"
+  if [[ "$out_dir" != "." ]]; then
+    mkdir -p -- "$out_dir"
+  fi
+  # Truncate/create and redirect stdout
+  exec > "$output_file"
+fi
+
 # ---------------- main pipeline ----------------
 {
   for dir in "${folders[@]}"; do
@@ -211,6 +373,7 @@ if [[ $delimiter == $'\0' ]]; then
   if $count_only; then
     total=0
     while IFS= read -r -d '' file; do
+      should_skip "$file" && continue
       count=$(wc -m < "$file" | tr -d '[:space:]')
       echo "$count ${file#./}"
       total=$((total + count))
@@ -218,10 +381,41 @@ if [[ $delimiter == $'\0' ]]; then
     echo "TOTAL $total"
   elif $list_only; then
     while IFS= read -r -d '' file; do
+      should_skip "$file" && continue
       echo "${file#./}"
     done
+  elif [[ -n "$zip_file" ]]; then
+    command -v zip >/dev/null 2>&1 || { echo "zip command not found (needed for --zip)" >&2; exit 1; }
+
+    tmp="$(mktemp)"
+    trap 'rm -f "$tmp"' EXIT
+
+    n=0
+    while IFS= read -r -d '' file; do
+      should_skip "$file" && continue
+      printf '%s\n' "${file#./}" >> "$tmp"
+      n=$((n + 1))
+    done
+
+    if (( n == 0 )); then
+      echo "No matching files to zip." >&2
+      exit 1
+    fi
+
+    zip_dir="$(dirname -- "$zip_file")"
+    if [[ "$zip_dir" != "." ]]; then
+      mkdir -p -- "$zip_dir"
+    fi
+
+    rm -f -- "$zip_file"
+
+    # -@ reads file names (one per line) from stdin.
+    zip -q "$zip_file" -@ < "$tmp"
+
+    echo "Wrote $zip_file ($n files)" >&2
   else
     while IFS= read -r -d '' file; do
+      should_skip "$file" && continue
       emit_file "$file"
     done
   fi
@@ -229,6 +423,7 @@ else
   if $count_only; then
     total=0
     while IFS= read -r file; do
+      should_skip "$file" && continue
       count=$(wc -m < "$file" | tr -d '[:space:]')
       echo "$count ${file#./}"
       total=$((total + count))
@@ -236,12 +431,41 @@ else
     echo "TOTAL $total"
   elif $list_only; then
     while IFS= read -r file; do
+      should_skip "$file" && continue
       echo "${file#./}"
     done
+  elif [[ -n "$zip_file" ]]; then
+    command -v zip >/dev/null 2>&1 || { echo "zip command not found (needed for --zip)" >&2; exit 1; }
+
+    tmp="$(mktemp)"
+    trap 'rm -f "$tmp"' EXIT
+
+    n=0
+    while IFS= read -r file; do
+      should_skip "$file" && continue
+      printf '%s\n' "${file#./}" >> "$tmp"
+      n=$((n + 1))
+    done
+
+    if (( n == 0 )); then
+      echo "No matching files to zip." >&2
+      exit 1
+    fi
+
+    zip_dir="$(dirname -- "$zip_file")"
+    if [[ "$zip_dir" != "." ]]; then
+      mkdir -p -- "$zip_dir"
+    fi
+
+    rm -f -- "$zip_file"
+
+    zip -q "$zip_file" -@ < "$tmp"
+
+    echo "Wrote $zip_file ($n files)" >&2
   else
     while IFS= read -r file; do
+      should_skip "$file" && continue
       emit_file "$file"
     done
   fi
 fi
-
